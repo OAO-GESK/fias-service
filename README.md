@@ -1,26 +1,48 @@
-# Сервис получения сведений из адресного справочника ФИАС
-- имя проекта: fias-service
-- автор: max@huzm.ru
-- дата: 2018
+# РЎРµСЂРІРёСЃ РїРѕР»СѓС‡РµРЅРёСЏ СЃРІРµРґРµРЅРёР№ РёР· Р°РґСЂРµСЃРЅРѕРіРѕ СЃРїСЂР°РІРѕС‡РЅРёРєР° Р¤РРђРЎ
+- РёРјСЏ РїСЂРѕРµРєС‚Р°: fias-service
+- Р°РІС‚РѕСЂ: max@huzm.ru
+- РґР°С‚Р°: 2018
 
-Источником данных является БД "fias" формата PostgreSQL, где имена полей таблиц совпадают с именами параметров объектов выгрузки ФИАС XML-формата.
-Имена таблиц:
-- addrobj: адресные объекты
-- house: дома
-- stead: земельные участки
-- room: помещения
+РСЃС‚РѕС‡РЅРёРєРѕРј РґР°РЅРЅС‹С… СЏРІР»СЏРµС‚СЃСЏ Р‘Р” "fias" С„РѕСЂРјР°С‚Р° PostgreSQL, РіРґРµ РёРјРµРЅР° РїРѕР»РµР№ С‚Р°Р±Р»РёС† СЃРѕРІРїР°РґР°СЋС‚ СЃ РёРјРµРЅР°РјРё РїР°СЂР°РјРµС‚СЂРѕРІ РѕР±СЉРµРєС‚РѕРІ РІС‹РіСЂСѓР·РєРё Р¤РРђРЎ XML-С„РѕСЂРјР°С‚Р°.
+РРјРµРЅР° С‚Р°Р±Р»РёС†:
+- addrobj: Р°РґСЂРµСЃРЅС‹Рµ РѕР±СЉРµРєС‚С‹
+- house: РґРѕРјР°
+- stead: Р·РµРјРµР»СЊРЅС‹Рµ СѓС‡Р°СЃС‚РєРё
+- room: РїРѕРјРµС‰РµРЅРёСЏ
 
-Сервиc работает по принципу RPC (remote procedure call) посредством брокера очередей RabbitMQ
+РЎРµСЂРІРёc СЂР°Р±РѕС‚Р°РµС‚ РїРѕ РїСЂРёРЅС†РёРїСѓ RPC (remote procedure call) РїРѕСЃСЂРµРґСЃС‚РІРѕРј Р±СЂРѕРєРµСЂР° РѕС‡РµСЂРµРґРµР№ RabbitMQ
 
-## Требования
+## РўСЂРµР±РѕРІР°РЅРёСЏ
 Python: 3.5+
 - pika==0.11.2
 - psycopg2==2.7.4
+
 RabbitMQ: 3.5.7+
 
-## Форматы запросов и ответов
+## Р¤РѕСЂРјР°С‚С‹ Р·Р°РїСЂРѕСЃРѕРІ Рё РѕС‚РІРµС‚РѕРІ
 
-### Запрос наименования адресного объекта по идентификатору AOGUID
-RabbitMQ queue: *fias_rpc*
-Request body: { "req" : "name_by_guid", "arg" : { "r" : <regioncode>, "guid" : <aoguid> } }
-Response body: { "aoguid" : <aoguid>, "parentguid" : <parentguid>, "formalname" : <formalname>, "shortname" : <shortname>, "aolevel" : <aolevel>, "regioncode" : <regioncode> }
+![the diagram](https://github.com/harinag/sass/blob/stable/Fias-Service.png)
+
+### Р—Р°РїСЂРѕСЃ РЅР°РёРјРµРЅРѕРІР°РЅРёСЏ Р°РґСЂРµСЃРЅРѕРіРѕ РѕР±СЉРµРєС‚Р° РїРѕ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂСѓ AOGUID
+RabbitMQ queue: ```fias_rpc```
+Request body: 
+```json
+{ 
+  "req" : "name_by_guid", 
+  "arg" : { 
+    "r"    : "<regioncode>",
+    "guid" : "<aoguid>" 
+  }
+}
+```
+Response body:
+```json
+{ 
+  "aoguid"     : "<aoguid>",
+  "parentguid" : "<parentguid>",
+  "formalname" : "<formalname>",
+  "shortname"  : "<shortname>",
+  "aolevel"    : "<aolevel>",
+  "regioncode" : "<regioncode>"
+}
+```
