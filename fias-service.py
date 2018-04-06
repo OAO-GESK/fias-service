@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import psycopg2
+import psycopg2.extras
 import pika
 import json
 
@@ -23,21 +24,26 @@ class FiasService:
         body  = json.loads(body)
         req = body['req']
         arg = body['arg']
+        ret = None
         print(' [x] Got RPC request {}({})'.format(req, arg))  # DEBUG mode only!
         if req == 'name_by_guid':
-            # search adr obj by aoguid, request is { req: '', arg: {r: '<region_code>', guid: '<aoguid>'}}
-            curs = self.db_conn.cursor()
+            # search adr obj by aoguid, request is  arg: {r: '<region_code>', guid: '<aoguid>'}
+            curs = self.db_conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             tabname = 'addrobj_'+arg['r'] if arg['r'] else 'addrobj'
             curs.execute("""
                 select a.aoguid, a.parentguid, a.formalname, a.shortname, a.aolevel, a.regioncode 
-                from {} a where a.aoguid = %s  and a.enddate > now()""".format(tabname,), (arg['guid'],) )
-            res = curs.fetchall()
-            ret = ''
-            for row in res: 
-                print (row)
-                ret = json.dumps(row)
+                from {} a where a.aoguid = %s  and a.enddate > now() limit 1""".format(tabname,), (arg['guid'],) )
+            res = curs.fetchone()
+            ret = json.dumps(res)
+            print('Response: ') # DEBUG
+            print(res)
             curs.close()
+        elif req == 'guids_by_name':
+            # search addr objects match to given name
+            pass
         # return results
+        if not ret:
+            ret = 'ERROR: Incorrect request!'
         ch.basic_publish(
             exchange='',
             routing_key = props.reply_to,
