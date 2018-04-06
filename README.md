@@ -3,16 +3,24 @@
 - автор: max@huzm.ru
 - дата: 2018
 
-Сервис работает с БД "fias" formata Postgresql, где имена полей таблиц совпадают с именами параметров объектов выгрузки ФИАС XML-формата.
+Источником данных является БД "fias" формата PostgreSQL, где имена полей таблиц совпадают с именами параметров объектов выгрузки ФИАС XML-формата.
 Имена таблиц:
 - addrobj: адресные объекты
 - house: дома
 - stead: земельные участки
 - room: помещения
 
-## Требования
-Версия python: 3.5+
+Сервиc работает по принципу RPC (remote procedure call) посредством брокера очередей RabbitMQ
 
-## Зависимости
-import:
-- psycopg2
+## Требования
+Python: 3.5+
+- pika==0.11.2
+- psycopg2==2.7.4
+RabbitMQ: 3.5.7+
+
+## Форматы запросов и ответов
+
+### Запрос наименования адресного объекта по идентификатору AOGUID
+RabbitMQ queue: *fias_rpc*
+Request body: { "req" : "name_by_guid", "arg" : { "r" : <regioncode>, "guid" : <aoguid> } }
+Response body: { "aoguid" : <aoguid>, "parentguid" : <parentguid>, "formalname" : <formalname>, "shortname" : <shortname>, "aolevel" : <aolevel>, "regioncode" : <regioncode> }
