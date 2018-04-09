@@ -3,6 +3,11 @@
 - автор: max@huzm.ru
 - дата: 2018
 
+## Оглавление
+[Запрос **name_by_guid**](#name_by_guid)
+
+
+## Общие сведения
 Источником данных является БД "fias" формата PostgreSQL, где имена полей таблиц совпадают с именами параметров объектов выгрузки ФИАС XML-формата.
 Имена таблиц:
 - addrobj: адресные объекты
@@ -22,9 +27,10 @@ RabbitMQ: 3.5.7+
 ## Форматы запросов и ответов
 
 ![the diagram](https://github.com/harinag/sass/blob/stable/Fias-Service.png)
+<a name="name_by_guid" />
+- ### name_by_guid
+Запрос наименования адресного объекта по идентификатору AOGUID
 
-### Запрос наименования адресного объекта по идентификатору AOGUID
-RabbitMQ queue: ```fias_rpc```
 Request body: 
 ```json
 { 
@@ -46,3 +52,4 @@ Response body:
   "regioncode" : "<regioncode>"
 }
 ```
+RabbitMQ queue: ```fias_rpc```
