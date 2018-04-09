@@ -30,13 +30,22 @@ class FiasService:
             # search adr obj by aoguid, request is  arg: {r: '<region_code>', guid: '<aoguid>'}
             curs = self.db_conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             tabname = 'addrobj_'+arg['r'] if arg['r'] else 'addrobj'
-            curs.execute("""
-                select a.aoguid, a.parentguid, a.formalname, a.shortname, a.aolevel, a.regioncode 
-                from {} a where a.aoguid = %s  and a.enddate > now() limit 1""".format(tabname,), (arg['guid'],) )
-            res = curs.fetchone()
-            ret = json.dumps(res)
+            try:
+                curs.execute("""
+                    select a.aoguid, a.parentguid, a.formalname, a.shortname, a.aolevel, a.regioncode 
+                    from {} a where a.aoguid = %s  and a.enddate > now() limit 1""".format(tabname,), (arg['guid'],) )
+                res = curs.fetchone()
+                if res:
+                    res['result'] = 'ok'
+                    ret = json.dumps(res)
+                else: 
+                    ret = json.dumps( {'result': 'notfound'} )
+            except Exception as e:
+                print(e)  # DEBUG
+                ret = json.dumps( {'result': 'error'} )
+                self.db_conn.rollback()
             print('Response: ') # DEBUG
-            print(res)
+            print(ret)
             curs.close()
         elif req == 'guids_by_name':
             # search addr objects match to given name

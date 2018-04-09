@@ -15,7 +15,7 @@
 - stead: земельные участки
 - room: помещения
 
-Сервиc работает по принципу RPC (remote procedure call) посредством брокера очередей RabbitMQ
+Сервиc работает по принципу RPC (remote procedure call) посредством брокера очередей RabbitMQ.
 
 ## Требования
 Python: 3.5+
@@ -26,12 +26,14 @@ RabbitMQ: 3.5.7+
 
 ## Форматы запросов и ответов
 
+Для всех запросов используется очередь ```fias-rpc```.
+
 ![the diagram](https://github.com/harinag/sass/blob/stable/Fias-Service.png)
 <a name="name_by_guid" />
 - ### name_by_guid
 Запрос наименования адресного объекта по идентификатору AOGUID
 
-Request body: 
+Формат запроса:
 ```json
 { 
   "req" : "name_by_guid", 
@@ -41,9 +43,13 @@ Request body:
   }
 }
 ```
-Response body:
+```r``` задает код региона, в котором сервис будет искать адресную запись. 
+Для поиска по всей адресной базе ```r``` должен быть пустой строкой.
+
+Формат ответа:
 ```json
 { 
+  "result"    : "ok|notfound|error",
   "aoguid"     : "<aoguid>",
   "parentguid" : "<parentguid>",
   "formalname" : "<formalname>",
@@ -52,4 +58,8 @@ Response body:
   "regioncode" : "<regioncode>"
 }
 ```
-RabbitMQ queue: ```fias_rpc```
+```result``` принимает одно из значений:
+- ```ok```: запрос завершился успешно, адресная запись найдена, информация в остальных полях ответа;
+- ```notfound```: не найдено ни одной записи, соответствующей запросу;
+- ```error```: запрос завершился с ошибкой - возможно неверно задан формат GUID (параметр ```guid``` запроса).
+
