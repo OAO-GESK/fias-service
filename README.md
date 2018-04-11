@@ -4,7 +4,8 @@
 - дата: 2018
 
 ## Оглавление
-[Запрос **name_by_guid**](#name_by_guid)
+- [Запрос **name_by_guid**](#name_by_guid)
+- [Запрос **guids_by_name**](#guids_by_name)
 
 
 ## Общие сведения
@@ -31,7 +32,9 @@ RabbitMQ: 3.5.7+
 ![the diagram](https://github.com/harinag/sass/blob/stable/Fias-Service.png)
 
 <a name="name_by_guid" />
-- ### name_by_guid
+
+## name_by_guid
+
 Запрос наименования адресного объекта по идентификатору AOGUID
 
 Формат запроса:
@@ -65,7 +68,9 @@ RabbitMQ: 3.5.7+
 - ```error```: запрос завершился с ошибкой - возможно неверно задан формат GUID (параметр ```guid``` запроса).
 
 <a name="guids_by_name" />
-- ### guids_by_name
+
+## guids_by_name
+
 Запрос поиска адресных объектов по соответствию имени (formalname) заданной строке.
 
 Формат запроса:
@@ -92,7 +97,7 @@ RabbitMQ: 3.5.7+
 - 7: улица (площ, пер, наб, ...)
 
 Формат ответа:
-```json
+```
 {
   "result"  : "ok|notfound|error",
   "addrobj" : [
