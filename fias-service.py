@@ -16,41 +16,76 @@ class FiasService:
         # PostgreSQL connection
         self.db_conn = psycopg2.connect(host='localhost', dbname='fias', user=db_user, password=db_passw)
 
-    def __del__():
+
+    def __del__(self):
         self.rabbit_conn.close()
         self.db_conn.close()
+
+
+    def name_by_guid(self, curs, tabname, guid):
+        # name_by guid RPC request handler
+        ret = None
+        try:
+            curs.execute("""
+                select a.aoguid, a.parentguid, a.formalname, a.shortname, a.aolevel, a.regioncode 
+                from {} a where a.aoguid = %s  and a.enddate > now() limit 1""".format(tabname,), (guid,) )
+            res = curs.fetchone()
+            if res:
+                res['result'] = 'ok'
+                ret = json.dumps(res)
+            else: 
+                ret = json.dumps( {'result': 'notfound'} )
+        except Exception as e:
+            print(' [!] Error:\n', e)  # DEBUG
+            ret = json.dumps( {'result': 'error'} )
+            self.db_conn.rollback()
+        return ret
+
+
+    def guids_by_name(self, curs, aoname, aolevels, parentguid, tabname):
+        # guid list for addrobjects match to given 'formalname'
+        ret = None
+        pguid = " and a.parentguid = '{}' ".format(parentguid) if parentguid else ''
+        aols = " and a.aolevel in ({}) ".format(aolevels) if aolevels else ''
+        q = """
+            select a.aoguid, a.parentguid, a.formalname, a.shortname, a.aolevel, a.regioncode
+            from {} a where a.formalname ilike %s  and  a.enddate > now()  {} {}
+            """.format(tabname, pguid, aols)
+        try:
+            curs.execute(q, (aoname,) )
+            res = curs.fetchall()
+            if curs.rowcount > 0:
+                ret = {'result': 'ok'}
+                ret['addrobj'] = []
+                for row in res:
+                    ret['addrobj'].append(row)
+                ret = json.dumps(ret)
+            else:
+                ret = json.dumps( {'result': 'notfound'} )
+        except Exception as e:
+            print(' [!] Error:\n', e)  # DEBUG
+            ret = json.dumps( {'result': 'error'} )
+            self.db_conn.rollback()
+        return ret            
+
 
     def on_rpc(self, ch, method, props, body):
         body  = json.loads(body)
         req = body['req']
         arg = body['arg']
-        ret = None
-        print(' [x] Got RPC request {}({})'.format(req, arg))  # DEBUG mode only!
+        print(' [x] Got RPC request {}({})'.format(req, arg))  # DEBUG
+        curs = self.db_conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         if req == 'name_by_guid':
             # search adr obj by aoguid, request is  arg: {r: '<region_code>', guid: '<aoguid>'}
-            curs = self.db_conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             tabname = 'addrobj_'+arg['r'] if arg['r'] else 'addrobj'
-            try:
-                curs.execute("""
-                    select a.aoguid, a.parentguid, a.formalname, a.shortname, a.aolevel, a.regioncode 
-                    from {} a where a.aoguid = %s  and a.enddate > now() limit 1""".format(tabname,), (arg['guid'],) )
-                res = curs.fetchone()
-                if res:
-                    res['result'] = 'ok'
-                    ret = json.dumps(res)
-                else: 
-                    ret = json.dumps( {'result': 'notfound'} )
-            except Exception as e:
-                print(e)  # DEBUG
-                ret = json.dumps( {'result': 'error'} )
-                self.db_conn.rollback()
-            print('Response: ') # DEBUG
-            print(ret)
-            curs.close()
+            ret = self.name_by_guid(curs, tabname, arg['guid'])
         elif req == 'guids_by_name':
             # search addr objects match to given name
-            pass
+            curs = self.db_conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            tabname = 'addrobj_'+arg['r'] if arg['r'] else 'addrobj'
+            ret = self.guids_by_name(curs, arg['aoname'], arg['aolevels'], arg['parent'], tabname)
         # return results
+        curs.close()
         if not ret:
             ret = 'ERROR: Incorrect request!'
         ch.basic_publish(
